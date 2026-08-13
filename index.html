@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Rewritten by `flutter build web --base-href`. GitHub Pages serves the app
+       from /ASplayer/, not from the root, so this is not a plain "/". -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <!-- No `viewport-fit=cover`, and an opaque status bar rather than a
+       translucent one. Together those two are what make iOS lay an installed
+       app out underneath the status bar, and that is the one condition under
+       which controls in this app are drawn in one place and answer taps in
+       another: scrolling still works, because a drag does not care where it
+       starts, while every small button quietly misses.
+
+       The cost is that the app no longer paints edge to edge behind the status
+       bar. Buttons that work are worth more than that. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Keep your own songs, listen offline. soundAS plays the music you already have.">
+
+  <!-- Installing to the home screen -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="soundAS">
+  <meta name="theme-color" content="#0D0D0D">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>soundAS</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* The app's own near-black, painted before Flutter boots so the first frame
+       is not a white flash on a dark theme.
+
+       `position: fixed` is not decoration. Installed to the home screen on iOS,
+       `overflow: hidden` does not actually stop the document from scrolling:
+       the page rubber-bands a few pixels and stays there, and Flutter reads tap
+       coordinates without that shift — so every button answers a little above
+       where it is drawn. Pinning the document kills the scroll outright. In a
+       normal browser tab the address bar absorbs the same slack, which is why
+       this only ever showed up in the installed app. */
+    html, body {
+      margin: 0;
+      padding: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0D0D0D;
+      overflow: hidden;
+      overscroll-behavior: none;
+      /* No double-tap-to-zoom, so the first tap counts instead of being held
+         back to see whether a second one is coming. */
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+    }
+    /* A holding state while the engine downloads. Removed by the app's first
+       frame, which paints over it. */
+    #boot {
+      position: fixed;
+      inset: 0;
+      /* Purely a backdrop: it must never be the thing a tap lands on. */
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: 600 30px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: -0.02em;
+      color: #F2F2F2;
+    }
+    #boot .as { color: #0ABAB5; }
+    #boot .dot {
+      width: 5px;
+      height: 5px;
+      margin-left: 10px;
+      border-radius: 50%;
+      background: #0ABAB5;
+      animation: pulse 1.1s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.25; transform: scale(0.8); }
+      50%      { opacity: 1;    transform: scale(1.15); }
+    }
+    @media (prefers-color-scheme: light) {
+      html, body { background: #FAFAFA; }
+      #boot { color: #101010; }
+    }
+  </style>
+</head>
+<body>
+  <div id="boot">sound<span class="as">AS</span><span class="dot"></span></div>
+  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Take the holding state out of the document once Flutter has put its own
+    // view in, rather than leaving it underneath forever.
+    new MutationObserver(function (records, observer) {
+      if (!document.querySelector('flutter-view, flt-glass-pane')) return;
+      var boot = document.getElementById('boot');
+      if (boot) boot.remove();
+      observer.disconnect();
+    }).observe(document.body, {childList: true, subtree: true});
+  </script>
+  <script>
+    // Frame-rate readout, only when the URL asks for it (?fps=1). Jank is a
+    // phone problem and the phone is the one place it cannot be profiled from
+    // here, so this reports the number instead of guessing at it: worst frame
+    // over the last second, which is what a stutter actually is — an average
+    // stays comfortable while every tenth frame takes 200 ms.
+    if (location.search.indexOf('fps=1') !== -1) {
+      var box = document.createElement('div');
+      box.style.cssText =
+        'position:fixed;top:0;left:0;z-index:2147483647;background:rgba(0,0,0,.75);' +
+        'color:#0ABAB5;font:600 12px/1.4 monospace;padding:4px 7px;pointer-events:none;' +
+        'border-bottom-right-radius:8px;white-space:pre';
+      document.documentElement.appendChild(box);
+      var last = performance.now(), frames = 0, worst = 0, since = last;
+      requestAnimationFrame(function tick(now) {
+        var gap = now - last;
+        last = now;
+        frames++;
+        if (gap > worst) worst = gap;
+        if (now - since >= 1000) {
+          box.textContent =
+            frames + ' fps   badtarin ' + worst.toFixed(0) + ' ms';
+          frames = 0; worst = 0; since = now;
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+  </script>
+  <script>
+    // Our own worker (see sw.js). Registered after load so it never competes
+    // with the engine download on a first visit — offline only has to work from
+    // the second launch onwards.
+    //
+    // updateViaCache 'none': the worker script itself must never come from the
+    // HTTP cache. Its contents are how a new release is noticed at all — the
+    // cache name inside it carries the build — so a stale copy would pin the
+    // app to an old version.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker
+          .register('sw.js', {updateViaCache: 'none'})
+          .catch(function (e) {
+            console.warn('[sw] registration failed', e);
+          });
+      });
+    }
+  </script>
+</body>
+</html>

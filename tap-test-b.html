@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <!-- Variant B: identical to tap-test.html except that it drops
+       `viewport-fit=cover` and asks for an opaque status bar instead of
+       `black-translucent`. Those two are what make iOS lay the web view out
+       underneath the status bar in an installed app; if B measures true and A
+       does not, they are the cause. -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ضربه ب">
+  <meta name="theme-color" content="#0D0D0D">
+  <title>آزمون ضربه — ب</title>
+  <link rel="stylesheet" href="tap-test.css">
+</head>
+<body>
+  <div id="targets"></div>
+  <div id="panel">
+    <div class="big" id="verdict">روی وسطِ هر پنج حلقه یک ضربه بزن</div>
+    <div id="deltas"></div>
+    <div id="metrics"></div>
+    <button id="reset">از نو</button>
+    <div style="margin-top:8px">نسخه‌ی ب — بدون نوار وضعیت شفاف</div>
+  </div>
+  <script src="tap-test.js"></script>
+</body>
+</html>
