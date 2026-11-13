@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <!-- Variant A: the app's own conditions.
+
+       Diagnostic for the installed-app tap offset. Deliberately plain HTML, no
+       Flutter: if taps land true here but not in the app, the fault is inside
+       Flutter's hit-testing rather than in the page setup, and that needs a
+       different fix. Variant B (tap-test-b.html) drops the two meta tags
+       suspected of shifting the viewport, so the pair isolates them.
+
+       What this must NOT carry is <link rel="manifest">: with a manifest, iOS
+       takes the manifest's start_url when adding to the home screen and would
+       install the app instead of this page. -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ضربه الف">
+  <meta name="theme-color" content="#0D0D0D">
+  <title>آزمون ضربه — الف</title>
+  <link rel="stylesheet" href="tap-test.css">
+</head>
+<body>
+  <div id="targets"></div>
+  <div id="panel">
+    <div class="big" id="verdict">روی وسطِ هر پنج حلقه یک ضربه بزن</div>
+    <div id="deltas"></div>
+    <div id="metrics"></div>
+    <button id="reset">از نو</button>
+    <div style="margin-top:8px">نسخه‌ی الف — مثل خودِ برنامه</div>
+  </div>
+  <script src="tap-test.js"></script>
+</body>
+</html>
